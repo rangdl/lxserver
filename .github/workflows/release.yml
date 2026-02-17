@@ -56,6 +56,12 @@ jobs:
           # 假设格式为 "## v1.0.1 ..." 开始，到下一个 "## " 结束
           awk '/^## v/ {if (p) exit; p=1} p' changelog.md > RELEASE_NOTES.md || cp changelog.md RELEASE_NOTES.md
 
+      - name: Delete existing release
+        run: |
+          gh release delete ${{ env.PROJECT_VERSION }} --yes --cleanup-tag || echo "Release not found"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:

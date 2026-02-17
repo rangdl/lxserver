@@ -53,6 +53,29 @@ jobs:
             org.opencontainers.image.description=LX Music Sync Server (Enhanced Edition)
             org.opencontainers.image.licenses=Apache-2.0
 
+      - name: Delete old Docker image versions
+        run: |
+          # 尝试删除现有 Tag 的镜像版本
+          PACKAGE_NAME="lxserver"
+          OWNER="${{ github.repository_owner }}"
+          
+          for TAG in "${{ env.PROJECT_VERSION }}" "latest"; do
+            echo "Checking for existing tag: $TAG"
+            # 尝试通过 orgs 或 users API 获取版本 ID
+            VERSION_ID=$(gh api "/orgs/$OWNER/packages/container/$PACKAGE_NAME/versions" --jq ".[] | select(.metadata.container.tags[] == \"$TAG\") | .id" 2>/dev/null || \
+                        gh api "/users/$OWNER/packages/container/$PACKAGE_NAME/versions" --jq ".[] | select(.metadata.container.tags[] == \"$TAG\") | .id" 2>/dev/null)
+            
+            if [ ! -z "$VERSION_ID" ]; then
+              echo "Deleting old version for $TAG (ID: $VERSION_ID)"
+              gh api -X DELETE "/orgs/$OWNER/packages/container/$PACKAGE_NAME/versions/$VERSION_ID" 2>/dev/null || \
+              gh api -X DELETE "/users/$OWNER/packages/container/$PACKAGE_NAME/versions/$VERSION_ID" 2>/dev/null
+            else
+              echo "No existing version found for tag: $TAG"
+            fi
+          done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:

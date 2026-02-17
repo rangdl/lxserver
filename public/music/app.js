@@ -1805,18 +1805,6 @@ function updatePlayerInfo(song) {
         // 直接设置文本，由 CSS 处理双行换行和省略号
         detailTitle.innerText = song.name;
         detailTitle.classList.remove('animate-marquee');
-
-        // 更新来源标签 (详情页)
-        const detailSourceEl = document.getElementById('detail-source');
-        if (detailSourceEl) {
-            if (song.source) {
-                detailSourceEl.innerHTML = getSourceTag(song.source);
-                detailSourceEl.classList.remove('hidden');
-            } else {
-                detailSourceEl.innerHTML = '';
-                detailSourceEl.classList.add('hidden');
-            }
-        }
     }
 
     const detailArtist = document.getElementById('detail-artist');
