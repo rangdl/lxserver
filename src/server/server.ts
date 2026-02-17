@@ -53,9 +53,62 @@ const normalizeSongInfo = (songInfo: any) => {
   if (!songInfo._types && songInfo.meta) {
     songInfo._types = songInfo.meta._qualitys || songInfo.meta._types
   }
-  // 处理备用字段
+  // 处理标题/专辑/封面等基础备用字段
   if (!songInfo.albumName && songInfo.meta?.albumName) songInfo.albumName = songInfo.meta.albumName
   if (!songInfo.img && songInfo.meta?.picUrl) songInfo.img = songInfo.meta.picUrl
+
+  // 1. 处理通用 ID 转换 (id -> songmid)
+  // 收藏夹中的歌曲 id 通常带有前缀 (如 wy_123)，清洗为 SDK 内部通用的 songmid (123)
+  if (!songInfo.songmid && songInfo.id) {
+    const sourcePrefix = `${songInfo.source}_`
+    if (typeof songInfo.id === 'string' && songInfo.id.startsWith(sourcePrefix)) {
+      songInfo.songmid = songInfo.id.slice(sourcePrefix.length)
+    } else {
+      songInfo.songmid = songInfo.id
+    }
+  }
+
+  // 2. 针对各平台 SDK 所需的特定字段进行“大补全”
+  // 目标：确保从“搜索结果”和“收藏列表”传入的信息字段完全对等
+  switch (songInfo.source) {
+    case 'kg': // 酷狗
+      // 关键：hash (用于评论和链接获取)
+      if (!songInfo.hash) {
+        const mid = String(songInfo.songmid || '')
+        if (mid.includes('_')) {
+          songInfo.hash = mid.split('_')[1]
+        } else if (mid.length === 32) {
+          songInfo.hash = mid
+        }
+      }
+      break
+
+    case 'tx': // 腾讯
+      // 关键：strMediaMid (获取链接), songId (数字 ID，用于评论)
+      if (!songInfo.strMediaMid && songInfo.meta?.strMediaMid) songInfo.strMediaMid = songInfo.meta.strMediaMid
+      if (!songInfo.songId && songInfo.meta?.songId) songInfo.songId = songInfo.meta.songId
+      if (!songInfo.albumMid && songInfo.meta?.albumMid) songInfo.albumMid = songInfo.meta.albumMid
+
+      // Fallback: 如果没有 songId 但有 songmid (通常是数字或者字母 ID)
+      if (!songInfo.songId) songInfo.songId = songInfo.songmid
+      break
+
+    case 'mg': // 咪咕
+      // 关键：copyrightId (用于获取链接), songId (用于评论)
+      if (!songInfo.copyrightId && songInfo.meta?.copyrightId) songInfo.copyrightId = songInfo.meta.copyrightId
+      if (!songInfo.songId) songInfo.songId = songInfo.songmid
+      break
+
+    case 'wy': // 网易
+      // 关键：songmid (即数字 ID)
+      // 已经在步骤 1 中通用处理
+      break
+
+    case 'kw': // 酷我
+      // 关键：songmid (即数字 ID)
+      // 已在步骤 1 中通用处理
+      break
+  }
 
   return songInfo
 }
@@ -1634,6 +1687,8 @@ const handleStartServer = async (port = 9527, ip = '127.0.0.1') => await new Pro
             }
 
             const method = type === 'hot' ? 'getHotComment' : 'getComment'
+            console.log(`[Comment] Song: ${songInfo.name}, ID: ${songInfo.songmid}, Source: ${source}`)
+
             if (!musicSdk[source].comment[method]) {
               console.warn(`[Comment] Method ${method} not supported for source ${source}`)
               throw new Error(`Method ${method} not supported for source ${source}`)

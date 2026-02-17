@@ -5277,7 +5277,16 @@ function createCommentItemHTML(comment, isReply = false) {
                         <span>${comment.likedCount || 0}</span>
                     </div>
                 </div>
-                <p class="text-xs md:text-sm text-gray-600 leading-relaxed break-words">${comment.text}</p>
+                <p class="text-xs md:text-sm text-gray-600 leading-relaxed break-words whitespace-pre-wrap">${comment.text}</p>
+                ${comment.images && comment.images.length > 0 ? `
+                    <div class="mt-2 flex flex-wrap gap-2">
+                        ${comment.images.map(img => `
+                            <img src="${img}" class="max-w-[200px] max-h-[300px] rounded-lg shadow-sm cursor-pointer hover:opacity-90 transition-opacity" 
+                                 onclick="window.open('${img}', '_blank')"
+                                 onerror="this.style.display='none'">
+                        `).join('')}
+                    </div>
+                ` : ''}
                 <div class="mt-2 flex items-center gap-3 text-[10px] text-gray-400 font-bold uppercase tracking-tight">
                     <span>${timeStr}${location}</span>
                 </div>
