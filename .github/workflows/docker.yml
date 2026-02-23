@@ -40,6 +40,16 @@ jobs:
           VERSION=$(grep "version:" public/js/config.js | sed "s/.*'\(.*\)'.*/\1/")
           echo "PROJECT_VERSION=$VERSION" >> $GITHUB_ENV
 
+      - name: Generate and Commit Build Hash
+        run: |
+          node scripts/update-build-hash.js
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/js/config.js
+          # Only commit if there are changes
+          git diff --quiet && git diff --staged --quiet || (git commit -m "chore: update build hash [skip ci]" && git push)
+        continue-on-error: true
+
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@v5

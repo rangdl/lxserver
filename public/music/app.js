@@ -52,6 +52,7 @@ let settings = {
     showLyricTranslation: true, // 显示歌词翻译
     showLyricRoma: false, // 显示歌词罗马音
     swapLyricTransRoma: false, // 交换翻译与罗马音位置
+    autoCompactPlaybar: true, // 自动精简控制栏 (默认开启)
     // Visualizer Settings (Refactored)
     showFooterVisualizer: true,
     footerVisualizerStyle: 'bars',
@@ -553,9 +554,11 @@ async function loadAboutContent() {
 
         // Render Markdown
         if (window.marked) {
-            // Replace {{version}} placeholder
+            // Replace {{version}} and {{buildHash}} placeholder
             const version = (window.CONFIG && window.CONFIG.version) || 'v1.0.0';
-            const content = text.replace(/{{version}}/g, version);
+            const buildHash = (window.CONFIG && window.CONFIG.buildHash) || 'unknown';
+            let content = text.replace(/{{version}}/g, version);
+            content = content.replace(/{{buildHash}}/g, buildHash);
             aboutContainer.innerHTML = window.marked.parse(content);
         } else {
             aboutContainer.innerText = text; // Fallback
@@ -1197,6 +1200,8 @@ function lazyLoadImages() {
 
 // Playback Logic
 let currentLoadingSongId = null; // Track currently loading song
+let loadingRequestCounter = 0;   // To identify unique play requests
+let currentLoadingRequestId = 0; // Track latest request ID
 
 let currentQuality = null; // 当前播放音质 (从 settings.preferredQuality 动态获取)
 let currentSourceType = 'normal'; // 当前链接来源类型: 'normal' | 'cache' | 'server_cache'
@@ -1265,7 +1270,9 @@ async function playSong(song, index, forceQuality = null, noPlay = false, isRetr
 
     // 2. New Song Request: Update target
     const thisRequestSongId = song.id;
+    const thisRequestId = ++loadingRequestCounter;
     currentLoadingSongId = thisRequestSongId;
+    currentLoadingRequestId = thisRequestId;
 
     currentIndex = index;
     currentPlayingSong = song;
@@ -1493,8 +1500,8 @@ async function playSong(song, index, forceQuality = null, noPlay = false, isRetr
         });
 
         // 3. Stale Check: If user switched song while fetching, discard result
-        if (currentLoadingSongId !== thisRequestSongId) {
-            console.log(`[Player] Discarding stale result for ${song.name} (Now loading: ${currentLoadingSongId})`);
+        if (currentLoadingRequestId !== thisRequestId) {
+            console.log(`[Player] Discarding stale result for ${song.name} (Now loading ID: ${currentLoadingRequestId}, Current: ${thisRequestId})`);
             return;
         }
 
@@ -1627,7 +1634,7 @@ async function playSong(song, index, forceQuality = null, noPlay = false, isRetr
         }
     } catch (error) {
         // Stale Check in error
-        if (currentLoadingSongId !== thisRequestSongId) return;
+        if (currentLoadingRequestId !== thisRequestId) return;
 
         console.error('[Player] 播放失败:', error);
 
@@ -1642,6 +1649,7 @@ async function playSong(song, index, forceQuality = null, noPlay = false, isRetr
             setPlayerStatus(`播放失败，尝试降级到 ${window.QualityManager.getQualityDisplayName(nextQuality)}...`);
 
             // Allow retry to proceed as new request
+            currentLoadingRequestId = 0;
             currentLoadingSongId = null;
 
             setTimeout(() => {
@@ -1661,7 +1669,8 @@ async function playSong(song, index, forceQuality = null, noPlay = false, isRetr
         }
         updatePlayButton(false);
     } finally {
-        if (currentLoadingSongId === thisRequestSongId) {
+        if (currentLoadingRequestId === thisRequestId) {
+            currentLoadingRequestId = 0;
             currentLoadingSongId = null;
         }
     }
@@ -1886,6 +1895,12 @@ function updatePlayerInfo(song) {
 }
 
 async function togglePlay() {
+    // 忽略因为长按触发的 click 事件
+    if (window.playBtnIsLongPress) {
+        window.playBtnIsLongPress = false;
+        return;
+    }
+
     if (audio.paused) {
         try {
             // [Crossfade] 如果开启了淡入淡出，先将进度置为 0，播放后再淡入
@@ -2819,6 +2834,11 @@ function syncSettingsUI(key = null, value = null) {
             }
         }
 
+        if (key === 'autoCompactPlaybar') {
+            const check = document.getElementById('setting-auto-compact-playbar');
+            if (check) check.checked = value;
+        }
+
         if (key === 'showFooterVisualizer') {
             const check = document.getElementById('setting-show-footer-visualizer');
             if (check) check.checked = value;
@@ -2963,6 +2983,9 @@ function syncSettingsUI(key = null, value = null) {
 
     const lrcSwap = document.getElementById('setting-swap-lyric-trans-roma');
     if (lrcSwap) lrcSwap.checked = settings.swapLyricTransRoma === true;
+
+    const autoCompact = document.getElementById('setting-auto-compact-playbar');
+    if (autoCompact) autoCompact.checked = settings.autoCompactPlaybar !== false;
 
     const lyricCache = document.getElementById('setting-enable-lyric-cache');
     if (lyricCache) lyricCache.checked = settings.enableLyricCache !== false;
@@ -3197,6 +3220,11 @@ function toggleLyrics() {
         setTimeout(() => {
             if (window.musicVisualizer) window.musicVisualizer.applySettings();
         }, 300);
+
+        // 如果开启了自动精简，且在手机端进入详情页，则自动精简
+        if (settings.autoCompactPlaybar !== false && window.innerWidth < 768) {
+            window.setCompactPlaybar(true);
+        }
     } else {
         view.classList.add('translate-y-[100%]', 'opacity-0');
         setTimeout(() => {
@@ -3204,6 +3232,11 @@ function toggleLyrics() {
             // Notify visualizer to switch back to footer
             if (window.musicVisualizer) window.musicVisualizer.applySettings();
         }, 600); // match transition duration
+
+        // 关闭详情页自动展开控制栏
+        if (settings.autoCompactPlaybar !== false && window.innerWidth < 768) {
+            window.setCompactPlaybar(false);
+        }
     }
 }
 
@@ -3420,8 +3453,8 @@ function getLyricOffset() {
     const footer = document.getElementById('player-footer');
     const isFooterHidden = footer && footer.classList.contains('translate-y-[110%]');
 
-    // 使用 0.35 作为黄金分割参考线位置
-    const ratio = isFooterHidden ? 0.35 : 0.35;
+    // 使用 0.35 作为黄金分割参考线位置 [lyric-scroll-indicator]
+    const ratio = isFooterHidden ? 0.25 : 0.25;
     return containerBox.clientHeight * ratio;
 }
 
@@ -6205,6 +6238,61 @@ document.addEventListener('DOMContentLoaded', () => {
             handleRemoteConnect();
         }
     }
+
+    // [New] 全局精简播放栏控制函数
+    window.setCompactPlaybar = function (compact, showToastMsg = false) {
+        const infoEl = document.getElementById('player-song-info');
+        const collapseBtn = document.getElementById('btn-collapse-panel');
+        if (!infoEl) return;
+
+        if (compact) {
+            infoEl.style.display = 'none';
+            if (collapseBtn) collapseBtn.style.display = 'none';
+            if (showToastMsg) showToast('info', '已开启精简播放控制栏', 1500);
+        } else {
+            infoEl.style.display = '';
+            if (collapseBtn) collapseBtn.style.display = '';
+            if (showToastMsg) showToast('info', '已恢复完整播放栏控制', 1500);
+        }
+
+        // 重新计算并应用底栏自适应布局高度 (解决手机端 Footer 高度重叠)
+        if (window.musicVisualizer && window.musicVisualizer.applySettings) {
+            setTimeout(() => window.musicVisualizer.applySettings(), 50);
+        }
+    };
+
+    // [New] 长按播放键隐藏播放栏内容 (精简模式)
+    const btnPlay = document.getElementById('btn-play');
+    if (btnPlay) {
+        let pressTimer;
+        const infoEl = document.getElementById('player-song-info');
+
+        const startPress = (e) => {
+            if (e.type === 'mousedown' && e.button !== 0) return; // 仅限左键
+            window.playBtnIsLongPress = false;
+            pressTimer = setTimeout(() => {
+                window.playBtnIsLongPress = true;
+                if (navigator.vibrate) navigator.vibrate(50);
+
+                if (infoEl) {
+                    const isHidden = infoEl.style.display === 'none';
+                    window.setCompactPlaybar(!isHidden, true);
+                }
+            }, 600); // 600ms = 长按
+        };
+
+        const cancelPress = () => {
+            if (pressTimer) clearTimeout(pressTimer);
+        };
+
+        // 事件绑定
+        btnPlay.addEventListener('mousedown', startPress);
+        btnPlay.addEventListener('touchstart', startPress, { passive: true });
+        btnPlay.addEventListener('mouseup', cancelPress);
+        btnPlay.addEventListener('touchend', cancelPress);
+        btnPlay.addEventListener('mouseleave', cancelPress);
+        btnPlay.addEventListener('touchcancel', cancelPress);
+    }
 });
 
 // ========================================
@@ -6281,7 +6369,7 @@ function toggleDetailCover() {
 
         // 移除容器所有可能的间距，确保歌词可以完美水平居中
         container.classList.remove('gap-4', 'md:gap-20', 'md:gap-14');
-        container.classList.remove('pt-24');
+        container.classList.remove('pt-8', 'mt-4', 'md:pt-0', 'md:pt-24');
         container.classList.add('pt-8', 'md:pt-32');
 
         if (lyricsWrapper) {
@@ -6290,7 +6378,7 @@ function toggleDetailCover() {
         }
 
         if (lyricContent) {
-            lyricContent.classList.remove('md:items-start', 'md:text-left');
+            lyricContent.classList.remove('md:items-start', 'md:text-left', 'md:pl-6');
             lyricContent.classList.add('items-center', 'text-center');
         }
 
@@ -6308,10 +6396,13 @@ function toggleDetailCover() {
 
         container.classList.remove('has-centered-lyrics');
 
-        // 恢复当前使用的固定间距
+        // 恢复当前使用的固定间距 (注意，这里只针对显示封面的状态进行恢复)
         container.classList.add('gap-4', 'md:gap-20');
-        container.classList.add('pt-24');
-        container.classList.remove('pt-8', 'md:pt-32');
+        container.classList.remove('pt-8', 'md:pt-32'); // 移除纯歌词专用间距
+
+        // 【关键修复】手机端带封面恢复为比较靠上的 pt-8 mt-4。桌面端具体是 md:pt-0 还是 md:pt-24 会被 togglePlayerPanel 状态控制，这里不再暴力强制覆盖 md:pt-24
+        container.classList.add('pt-8', 'mt-4');
+
 
         if (lyricsWrapper) {
             lyricsWrapper.classList.remove('md:w-auto', 'md:max-w-[50%]', 'md:w-2/3', 'mx-auto', 'lyrics-centered');
@@ -6320,7 +6411,7 @@ function toggleDetailCover() {
         }
 
         if (lyricContent) {
-            lyricContent.classList.add('items-center', 'md:items-start', 'text-center', 'md:text-left');
+            lyricContent.classList.add('items-center', 'md:items-start', 'text-center', 'md:text-left', 'md:pl-6');
         }
 
         if (titleParent) {
@@ -6408,13 +6499,8 @@ function togglePlayerPanel() {
         // 桌面端: 恢复 md:pt-0 (垂直居中, 无顶部Padding)
         if (container) {
             container.classList.remove('translate-y-12', 'opacity-80', 'scale-95');
+            container.classList.remove('md:pt-24');
             container.classList.add('md:pt-0');
-        }
-
-        // 歌词高度限制: 恢复限制
-        if (lyricsWrapper) {
-            lyricsWrapper.classList.add('max-h-[60vh]');
-            lyricsWrapper.classList.remove('h-full');
         }
     } else {
         // 隐藏播放栏 (向下移出屏幕) 
@@ -6446,21 +6532,16 @@ function togglePlayerPanel() {
             playerDetail.classList.add('pb-0');
         }
 
-        // 桌面端: 移除 md:pt-0, 使用 pt-24 (避免遮挡顶部 NOW PLAYING)
+        // 桌面端: 移除 md:pt-0, 添加 md:pt-24 (避免遮挡顶部 NOW PLAYING)
         // 调整内容容器以填满全屏
         if (container) {
             container.classList.remove('md:pt-0');
+            container.classList.add('md:pt-24');
             container.classList.add('translate-y-12', 'opacity-80', 'scale-95');
             // 稍后移除微调，保持丝滑
             setTimeout(() => {
                 container.classList.remove('translate-y-12', 'opacity-80', 'scale-95');
             }, 600);
-        }
-
-        // 歌词高度限制: 该满屏
-        if (lyricsWrapper) {
-            lyricsWrapper.classList.remove('max-h-[60vh]');
-            lyricsWrapper.classList.add('h-full');
         }
     }
 

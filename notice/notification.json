@@ -18,25 +18,25 @@
         }
     },
     {
-        "comment": "=== 版本更新 v1.5.4 ===",
-        "id": "update_v1_5_4",
+        "comment": "=== 版本更新 v1.5.5 ===",
+        "id": "update_v1_5_5",
         "status": "active",
         "type": "version",
         "logic": {
-            "target_version": "v1.5.4",
+            "target_version": "v1.5.5",
             "operator": "<",
             "interval_hours": 24
         },
         "ui": {
-            "title": "发现新版本 v1.5.4",
-            "date": "2026-02-22",
-            "message": "本次更新带来了以下变动：\n1. 🌙 暗夜模式：新增加暗夜模式。\n2. 🛡️ 自动代理：增加了针对 HTTPS 下 HTTP 资源的自动代理机制。\n3. 🔧 界面优化：修复了部分 UI 并去除了收藏列表的专辑显示。\n4. 📱 保持唤醒：新增保持屏幕常亮功能，阻止移动端息屏断流。",
+            "title": "发现新版本 v1.5.5",
+            "date": "2026-02-23",
+            "message": "本次更新带来了以下变动：\n1. 📱 自动精简：手机端播放自动精简控制栏，优化小屏体验。\n2. 🔧 UI 修复：修复优化了诸多手机/电脑播放页面 UI 问题。\n3. 🚀 播放修复：修复了过期缓存链接重新获取播放失败的问题。",
             "confirm_text": "去查看",
             "cancel_text": "稍后提醒"
         },
         "action": {
             "type": "link",
-            "url": "https://github.com/XCQ0607/lxserver/releases/tag/v1.5.4"
+            "url": "https://github.com/XCQ0607/lxserver/releases/tag/v1.5.5"
         }
     }
 ]

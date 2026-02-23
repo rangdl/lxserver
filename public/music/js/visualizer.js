@@ -148,9 +148,15 @@ const musicVisualizer = (function () {
             visualizerContainer.style.display = 'flex'; // 确保可见
             if (playerFooter) {
                 playerFooter.style.transition = 'height 0.3s ease';
-                // 再次压缩：超矮窗口下，Footer 高度仅设为 90px
-                playerFooter.style.height = isShortWindow ? '90px' : '150px';
-                playerFooter.style.justifyContent = 'center'; // [Fix] 增加高度后内容保持垂直居中
+                if (window.innerWidth >= 768) {
+                    // 再次压缩：超矮窗口下，Footer 高度仅设为 90px
+                    playerFooter.style.height = isShortWindow ? '90px' : '150px';
+                    playerFooter.style.justifyContent = 'center'; // [Fix] 增加高度后内容保持垂直居中
+                } else {
+                    // 手机端保持自适应高度，避免 flex-center 导致内容溢出屏幕外
+                    playerFooter.style.height = '';
+                    playerFooter.style.justifyContent = '';
+                }
             }
 
             // [Important] 如果音频正在播放但 Context 挂起了（常见于浏览器策略），立即恢复
@@ -162,9 +168,9 @@ const musicVisualizer = (function () {
             const mainViews = document.querySelectorAll('#view-search, #view-favorites, #view-settings, #view-about, #view-player-detail');
             mainViews.forEach(view => {
                 view.style.transition = 'padding-bottom 0.3s ease';
-                // 激进压缩：在短屏下 Padding 仅设为 80px，确保页面内容整体下移，给顶部留出空间
-                let padding = footerIsHidden ? '' : '180px';
-                if (!footerIsHidden && isShortWindow) padding = '80px';
+                // 激进压缩：在短屏下 Padding 适当保守，确保页面内容整体下移，给顶部留出空间
+                let padding = footerIsHidden ? '' : '200px';
+                if (!footerIsHidden && isShortWindow) padding = '130px';
                 view.style.paddingBottom = padding;
             });
 
@@ -172,7 +178,7 @@ const musicVisualizer = (function () {
             const sidebar = document.querySelector('aside');
             if (sidebar) {
                 sidebar.style.transition = 'padding-bottom 0.3s ease';
-                sidebar.style.paddingBottom = footerIsHidden ? '' : '160px';
+                sidebar.style.paddingBottom = footerIsHidden ? '' : '180px';
             }
         } else if (footerCanvas && visualizerContainer) {
             footerCanvas.style.opacity = '0';

@@ -525,7 +525,7 @@
 
         <!-- Sidebar -->
         <aside id="main-sidebar"
-            class="w-64 t-bg-panel shadow-lg flex flex-col z-[60] fixed inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 md:z-30 h-full pb-32 transition-all duration-300">
+            class="w-64 t-bg-panel shadow-lg flex flex-col z-[60] fixed inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 md:z-30 h-full pb-44 md:pb-32 transition-all duration-300">
             <div class="h-16 flex items-center justify-center border-b t-border-main relative">
                 <svg viewBox="0 0 447.942 447.943" class="w-8 h-8 mr-2 rounded-lg shadow-sm"
                     xmlns="http://www.w3.org/2000/svg">
@@ -660,7 +660,7 @@
 
                 <!-- Search View -->
                 <div id="view-search"
-                    class="absolute inset-0 flex flex-col px-2 pt-2 md:px-6 md:pt-6 pb-32 overflow-hidden transition-all duration-300">
+                    class="absolute inset-0 flex flex-col px-2 pt-2 md:px-6 md:pt-6 pb-44 md:pb-32 overflow-hidden transition-all duration-300">
                     <!-- Search Input Area -->
                     <div class="flex flex-col md:flex-row gap-2 md:gap-4 mb-4 md:mb-6">
                         <!-- Search Input -->
@@ -769,7 +769,7 @@
 
                 <!-- Favorites View -->
                 <div id="view-favorites"
-                    class="absolute inset-0 flex flex-col px-6 pt-6 md:px-12 md:pt-12 pb-32 hidden opacity-0 transition-all duration-300">
+                    class="absolute inset-0 flex flex-col px-6 pt-6 md:px-12 md:pt-12 pb-44 md:pb-32 hidden opacity-0 transition-all duration-300">
                     <div class="flex-1 flex flex-col items-center justify-center t-text-muted">
                         <div class="relative mb-8">
                             <div
@@ -795,7 +795,7 @@
 
                 <!-- Settings View -->
                 <div id="view-settings"
-                    class="absolute inset-0 overflow-y-auto custom-scrollbar px-6 pt-6 pb-32 hidden opacity-0 transition-all duration-300">
+                    class="absolute inset-0 overflow-y-auto custom-scrollbar px-6 pt-6 pb-44 md:pb-32 hidden opacity-0 transition-all duration-300">
                     <div class="t-bg-panel rounded-2xl shadow-sm border t-border-main p-8 max-w-2xl mx-auto w-full">
                         <h2 class="text-2xl font-bold t-text-main mb-6">设置</h2>
 
@@ -1453,6 +1453,28 @@
                                             </label>
                                         </div>
                                     </div>
+
+                                    <!-- Auto Compact Playbar Toggle -->
+                                    <div
+                                        class="t-bg-panel rounded-xl border t-border-main p-4 hover:shadow-sm transition-shadow">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <h4 class="text-sm font-bold t-text-main">自动精简控制栏 (Auto Compact Playbar)
+                                                </h4>
+                                                <p class="text-xs t-text-muted mt-1">
+                                                    (仅手机版) 进入歌词界面自动精简，关闭时展开。长按播放键以手动切换。
+                                                </p>
+                                            </div>
+                                            <label class="relative inline-flex items-center cursor-pointer">
+                                                <input type="checkbox" id="setting-auto-compact-playbar"
+                                                    class="sr-only peer"
+                                                    onchange="updateSetting('autoCompactPlaybar', this.checked)">
+                                                <div
+                                                    class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500 transition-all">
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -1748,7 +1770,7 @@
                 </div>
                 <!-- About View -->
                 <div id="view-about"
-                    class="absolute inset-0 overflow-y-auto custom-scrollbar px-6 pt-6 pb-32 hidden opacity-0 transition-all duration-300">
+                    class="absolute inset-0 overflow-y-auto custom-scrollbar px-6 pt-6 pb-44 md:pb-32 hidden opacity-0 transition-all duration-300">
                     <div
                         class="t-bg-panel rounded-2xl shadow-sm border t-border-main p-8 max-w-3xl mx-auto w-full prose prose-emerald">
                         <div id="about-content" class="animate-pulse">
@@ -1804,7 +1826,7 @@
 
         <!-- Main Content -->
         <div id="player-detail-container"
-            class="relative z-10 flex-1 flex flex-col md:flex-row items-center justify-start md:justify-center gap-4 md:gap-20 pt-20 md:pt-0 pb-6 overflow-hidden transition-all duration-300 ease-out [@media(max-height:500px)]:pt-0 [@media(max-height:500px)]:justify-center">
+            class="relative z-10 flex-1 flex flex-col md:flex-row items-center justify-start md:justify-center gap-4 md:gap-20 pt-8 mt-4 md:mt-0 md:pt-0 pb-6 overflow-hidden transition-all duration-300 ease-out [@media(max-height:500px)]:pt-0 [@media(max-height:500px)]:justify-center">
 
             <!-- Left: Image -->
             <div id="mobile-player-cover-container"
@@ -1815,10 +1837,10 @@
 
             <!-- Right: Lyrics -->
             <div id="lyrics-wrapper"
-                class="w-full md:w-[500px] lg:w-[600px] h-full max-h-[60vh] [@media(max-height:500px)]:max-h-[50vh] flex flex-col relative transition-all duration-300 flex-shrink-0">
+                class="w-full md:w-[500px] lg:w-[600px] flex-1 min-h-0 md:flex-none md:h-full md:max-h-[70vh] flex flex-col relative transition-all duration-300 flex-shrink-0">
                 <!-- Song Info -->
                 <div class="mb-4 md:mb-8 text-center md:text-left px-4 md:pl-6 cursor-pointer transition-all duration-300 active:scale-95 select-none"
-                    onclick="toggleDetailCover()" title="点击切换封面显示">
+                    onclick="toggleDetailCover()" title="点击标题隐藏封面">
                     <div id="detail-title-container" class="w-full overflow-hidden whitespace-nowrap mb-1">
                         <div id="detail-title"
                             class="inline-block text-2xl md:text-4xl font-black t-text-main drop-shadow-sm min-w-full">
@@ -1828,7 +1850,7 @@
                     <div id="detail-artist" class="text-base md:text-xl t-text-muted font-medium truncate">Artist</div>
                     <div id="toggle-hint"
                         class="md:hidden text-[10px] text-emerald-500/60 mt-2 font-mono tracking-widest opacity-80 transition-all duration-1000 overflow-hidden max-h-8">
-                        <i class="fas fa-chevron-up text-xs animate-bounce mr-1"></i>点击标题切换封面
+                        <i class="fas fa-chevron-up text-xs animate-bounce mr-1"></i>点击标题隐藏封面
                     </div>
                 </div>
 
@@ -1865,7 +1887,8 @@
         class="fixed bottom-0 left-0 w-full h-auto md:h-24 py-2 md:py-0 t-bg-panel/90 backdrop-blur-lg border-t t-border-main shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] flex flex-col md:flex-row items-center px-4 md:px-6 z-50 transition-all duration-300">
 
         <!-- Song Info -->
-        <div class="w-full md:w-1/4 flex items-center gap-2 md:gap-4 mb-2 md:mb-0 pr-8 md:pr-0">
+        <div id="player-song-info"
+            class="w-full md:w-1/4 flex items-center gap-2 md:gap-4 mb-2 md:mb-0 pr-8 md:pr-0 transition-all duration-300">
             <div
                 class="w-12 h-12 md:w-14 md:h-14 bg-gray-200 rounded-md overflow-hidden shadow-sm relative group flex-shrink-0">
                 <img id="player-cover" src="/music/assets/logo.svg" onerror="this.src='/music/assets/logo.svg'"

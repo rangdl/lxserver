@@ -3,8 +3,11 @@
   "version": "2.1.2",
   "private": true,
   "scripts": {
+    "prebuild": "node scripts/update-build-hash.js",
     "build": "rimraf server && tsc --project tsconfig.json && tsc-alias -p tsconfig.json",
+    "prestart": "node scripts/update-build-hash.js",
     "start": "node ./index.js",
+    "predev": "node scripts/update-build-hash.js",
     "dev": "nodemon",
     "prd": "pm2 start ecosystem.config.js --env production",
     "publish": "node publish"

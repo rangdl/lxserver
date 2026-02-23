@@ -59,7 +59,7 @@ export const rsaDecrypt = (buffer: Buffer, key: string): Buffer => {
 }
 
 
-const gzip = async(data: string) => new Promise<string>((resolve, reject) => {
+const gzip = async (data: string) => new Promise<string>((resolve, reject) => {
   zlib.gzip(data, (err, buf) => {
     if (err) {
       reject(err)
@@ -68,7 +68,7 @@ const gzip = async(data: string) => new Promise<string>((resolve, reject) => {
     resolve(buf.toString('base64'))
   })
 })
-const unGzip = async(data: string) => new Promise<string>((resolve, reject) => {
+const unGzip = async (data: string) => new Promise<string>((resolve, reject) => {
   zlib.gunzip(Buffer.from(data, 'base64'), (err, buf) => {
     if (err) {
       reject(err)
@@ -78,7 +78,7 @@ const unGzip = async(data: string) => new Promise<string>((resolve, reject) => {
   })
 })
 
-export const encryptMsg = async(keyInfo: LX.Sync.KeyInfo | null, msg: string): Promise<string> => {
+export const encryptMsg = async (keyInfo: LX.Sync.KeyInfo | null, msg: string): Promise<string> => {
   return msg.length > 1024
     ? 'cg_' + await gzip(msg)
     : msg
@@ -86,7 +86,7 @@ export const encryptMsg = async(keyInfo: LX.Sync.KeyInfo | null, msg: string): P
   // return aesEncrypt(msg, keyInfo.key, keyInfo.iv)
 }
 
-export const decryptMsg = async(keyInfo: LX.Sync.KeyInfo | null, enMsg: string): Promise<string> => {
+export const decryptMsg = async (keyInfo: LX.Sync.KeyInfo | null, enMsg: string): Promise<string> => {
   return enMsg.substring(0, 3) == 'cg_'
     ? await unGzip(enMsg.replace('cg_', ''))
     : enMsg

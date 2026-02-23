@@ -404,18 +404,22 @@ const handleStartServer = async (port = 9527, ip = '127.0.0.1') => await new Pro
     // 动态 config.js - 从静态文件读取版本号, 合并服务端配置注入 window.CONFIG
     // 配置优先级: 环境变量 > 根目录 config.js > src/defaultConfig.ts
     if (pathname === '/js/config.js') {
-      // 从静态文件读取版本号
+      // 从静态文件读取版本号和构建哈希
       const staticConfigPath = path.join(global.lx.staticPath, 'js', 'config.js')
       let version = 'v1.0.0'
+      let buildHash = 'unknown'
       try {
         const content = fs.readFileSync(staticConfigPath, 'utf-8')
-        const match = content.match(/version:\s*['"]([^'"]+)['"]/)
-        if (match) version = match[1]
+        const matchVersion = content.match(/version:\s*['"]([^'"]+)['"]/)
+        if (matchVersion) version = matchVersion[1]
+        const matchHash = content.match(/buildHash:\s*['"]([^'"]+)['"]/)
+        if (matchHash) buildHash = matchHash[1]
       } catch { }
 
       // 构造前端配置 (不含敏感字段如密码)
       const frontendConfig = {
         version,
+        buildHash,
         serverName: global.lx.config.serverName,
         disableTelemetry: global.lx.config.disableTelemetry || false,
         'proxy.enabled': global.lx.config['proxy.enabled'],

@@ -303,10 +303,13 @@ class App {
             if (!response.ok) throw new Error('Failed to load about.md');
             const text = await response.text();
 
+            // Render Markdown
             if (window.marked) {
-                // Replace version placeholder
+                // Replace {{version}} and {{buildHash}} placeholder
                 const version = (window.CONFIG && window.CONFIG.version) || 'v1.0.0';
-                const content = text.replace(/{{version}}/g, version);
+                const buildHash = (window.CONFIG && window.CONFIG.buildHash) || 'unknown';
+                let content = text.replace(/{{version}}/g, version);
+                content = content.replace(/{{buildHash}}/g, buildHash);
                 container.innerHTML = window.marked.parse(content);
             } else {
                 container.innerText = text;
