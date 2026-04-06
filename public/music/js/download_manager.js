@@ -362,9 +362,7 @@ class DownloadManager {
             if (!result || !result.url) throw new Error('解析失败');
 
             // 2. Post to backend
-            const headers = { 'Content-Type': 'application/json' };
-            const username = (window.currentListData && window.currentListData.username) || localStorage.getItem('lx_sync_user') || '';
-            if (username) headers['x-user-name'] = username;
+            const headers = { 'Content-Type': 'application/json', ...(window.getUserAuthHeaders ? window.getUserAuthHeaders() : {}) };
 
             const res = await fetch('/api/music/cache/download', {
                 method: 'POST',
@@ -404,13 +402,7 @@ class DownloadManager {
             task.quality = quality;
             this.renderTask(task);
 
-            const headers = { 'Content-Type': 'application/json' };
-            const authToken = sessionStorage.getItem('lx_player_auth');
-            if (authToken) headers['x-user-token'] = authToken;
-            const username = (window.currentListData && window.currentListData.username) || localStorage.getItem('lx_sync_user') || '';
-            if (username) {
-                headers['x-user-name'] = username;
-            }
+            const headers = { 'Content-Type': 'application/json', ...(window.getUserAuthHeaders ? window.getUserAuthHeaders() : {}) };
 
             // Fetch the resolving URL
             const resolveRes = await fetch('/api/music/url', {
@@ -588,10 +580,8 @@ class DownloadManager {
         if (task.isServer) {
             // 云端任务：通知后端停止，并更新本地状态
             if (task.status === 'downloading' || task.status === 'waiting') {
-                const username = (window.currentListData && window.currentListData.username) || localStorage.getItem('lx_sync_user') || '';
                 const songKey = task.id.replace(/^server_(batch_)?/, '');
-                const headers = { 'Content-Type': 'application/json' };
-                if (username) headers['x-user-name'] = username;
+                const headers = { 'Content-Type': 'application/json', ...(window.getUserAuthHeaders ? window.getUserAuthHeaders() : {}) };
 
                 fetch('/api/music/cache/stop', {
                     method: 'POST',
@@ -637,11 +627,7 @@ class DownloadManager {
                     const result = await resolveSongUrl(task.song, quality, true, true);
                     if (!result || !result.url) throw new Error('获取播放地址失败');
 
-                    const headers = { 'Content-Type': 'application/json' };
-                    const authToken = sessionStorage.getItem('lx_player_auth');
-                    if (authToken) headers['x-user-token'] = authToken;
-                    const username = (window.currentListData && window.currentListData.username) || localStorage.getItem('lx_sync_user') || '';
-                    if (username) headers['x-user-name'] = username;
+                    const headers = { 'Content-Type': 'application/json', ...(window.getUserAuthHeaders ? window.getUserAuthHeaders() : {}) };
 
                     const res = await fetch('/api/music/cache/download', {
                         method: 'POST',
@@ -670,10 +656,8 @@ class DownloadManager {
         if (task) {
             if (task.isServer && (task.status === 'downloading' || task.status === 'waiting')) {
                 // 云端任务：通知后端停止
-                const username = (window.currentListData && window.currentListData.username) || localStorage.getItem('lx_sync_user') || '';
                 const songKey = task.id.replace(/^server_(batch_)?/, '');
-                const headers = { 'Content-Type': 'application/json' };
-                if (username) headers['x-user-name'] = username;
+                const headers = { 'Content-Type': 'application/json', ...(window.getUserAuthHeaders ? window.getUserAuthHeaders() : {}) };
 
                 fetch('/api/music/cache/stop', {
                     method: 'POST',
@@ -738,11 +722,7 @@ class DownloadManager {
                         const result = await resolveSongUrl(t.song, quality, true, true);
                         if (!result || !result.url) throw new Error('获取地址失败');
 
-                        const headers = { 'Content-Type': 'application/json' };
-                        const authToken = sessionStorage.getItem('lx_player_auth');
-                        if (authToken) headers['x-user-token'] = authToken;
-                        const username = (window.currentListData && window.currentListData.username) || localStorage.getItem('lx_sync_user') || '';
-                        if (username) headers['x-user-name'] = username;
+                        const headers = { 'Content-Type': 'application/json', ...(window.getUserAuthHeaders ? window.getUserAuthHeaders() : {}) };
 
                         const res = await fetch('/api/music/cache/download', {
                             method: 'POST',

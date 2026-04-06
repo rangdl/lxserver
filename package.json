@@ -44,6 +44,7 @@
     "module-alias": "^2.2.3",
     "music-tag-native": "^0.2.1",
     "needle": "^3.3.1",
+    "socks-proxy-agent": "^10.0.0",
     "tunnel": "^0.0.6",
     "unzipper": "^0.11.6",
     "utf-8-validate": "^6.0.3",

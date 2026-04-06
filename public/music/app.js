@@ -65,6 +65,8 @@ const DEFAULT_SETTINGS = {
     enableProxyPlayback: false, // 播放音乐代理
     enableProxyDownload: false, // 下载音乐代理
     enableAutoProxy: true, // 自动代理
+    enableCustomProxy: false, // 是否启用自定义代理
+    customProxyUrl: '', // 自定义代理URL模板，使用 {url} 作为原始URL占位符
     downloadConcurrency: 3, // 缓存并发量 (1-6)
     hotSearchLimit: 20, // 热搜显示数量
     lyricFontSize: 1.25, // 歌词字体大小 (rem)
@@ -256,6 +258,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const autoProxy = document.getElementById('toggle-auto-proxy');
     if (autoProxy) autoProxy.checked = settings.enableAutoProxy;
+
+    // Initialize Custom Proxy UI
+    const customProxyToggle = document.getElementById('toggle-custom-proxy');
+    if (customProxyToggle) customProxyToggle.checked = settings.enableCustomProxy;
+    const customProxyInput = document.getElementById('custom-proxy-url-input');
+    if (customProxyInput) customProxyInput.value = settings.customProxyUrl || '';
+    const customProxyRow = document.getElementById('custom-proxy-url-row');
+    if (customProxyRow) customProxyRow.classList.toggle('hidden', !settings.enableCustomProxy);
 
     const hotSearchLimitInput = document.getElementById('hot-search-limit-input');
     if (hotSearchLimitInput) {
@@ -1906,6 +1916,12 @@ async function applyAutoProxy(url, song) {
     // 优先级 1：如果手动开启了“播放音乐代理”，则无条件走代理 (用于解决 IP 封锁或跨域限制)
     if (settings.enableProxyPlayback) {
         console.log(`[Proxy] Forced proxy enabled for: ${song.name}`);
+        // 如果同时启用了自定义代理，优先使用（客户端直接请求，不经服务器中转）
+        if (settings.enableCustomProxy && settings.customProxyUrl) {
+            const proxyUrl = settings.customProxyUrl.replace('{url}', url);
+            console.log(`[Proxy] Custom proxy applied (forced): ${song.name} -> ${proxyUrl}`);
+            return proxyUrl;
+        }
         const filename = `${song.singer} - ${song.name}.mp3`;
         return `/api/music/download?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(filename)}&inline=1`;
     }
@@ -1940,6 +1956,12 @@ async function applyAutoProxy(url, song) {
 
         // 探测失败，如果开启了“自动代理”，则走服务器代理以通过 Mixed Content 检查
         if (settings.enableAutoProxy) {
+            // 优先使用自定义代理（客户端直接请求，不经服务器中转）
+            if (settings.enableCustomProxy && settings.customProxyUrl) {
+                const proxyUrl = settings.customProxyUrl.replace('{url}', url);
+                console.log(`[Proxy] Custom proxy applied: ${song.name} -> ${proxyUrl}`);
+                return proxyUrl;
+            }
             console.log(`[Proxy] Auto-proxying via server: ${song.name}`);
             const filename = `${song.singer} - ${song.name}.mp3`;
             return `/api/music/download?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(filename)}&inline=1`;
@@ -3970,6 +3992,15 @@ const SETTINGS_UI_MAP = {
     enableProxyPlayback: { id: 'toggle-proxy-playback', type: 'checkbox' },
     enableProxyDownload: { id: 'toggle-proxy-download', type: 'checkbox' },
     enableAutoProxy: { id: 'toggle-auto-proxy', type: 'checkbox' },
+    enableCustomProxy: {
+        id: 'toggle-custom-proxy',
+        type: 'checkbox',
+        action: (v) => {
+            const row = document.getElementById('custom-proxy-url-row');
+            if (row) row.classList.toggle('hidden', !v);
+        }
+    },
+    customProxyUrl: { id: 'custom-proxy-url-input', type: 'value' },
     enablePublicSources: { id: 'toggle-public-sources', type: 'checkbox' },
     preferredQuality: {
         id: 'quality-select',

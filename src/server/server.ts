@@ -245,12 +245,11 @@ setInterval(() => {
   for (const [token, session] of userSessions) {
     if (now - session.createdAt > USER_SESSION_TTL) userSessions.delete(token)
   }
-  // 清理加载到内存的过期 API Token
-  for (const [token, username] of persistentTokens) {
-    const config = getUserTokenConfig(username)
-    const t = config.tokens.find(tk => tk.token === token)
-    if (!t || (t.expiresAt && t.expiresAt <= now)) {
+  // 清理加载到内存的过期 API Token（直接走内存 meta，不读磁盘）
+  for (const [token, meta] of persistentTokenMeta) {
+    if (meta.expiresAt && meta.expiresAt <= now) {
       persistentTokens.delete(token)
+      persistentTokenMeta.delete(token)
     }
   }
 }, 60 * 60 * 1000)
