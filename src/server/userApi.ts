@@ -6,7 +6,6 @@ import needle from 'needle'
 import * as crypto from 'crypto'
 import * as zlib from 'zlib'
 import { promisify } from 'util'
-import { SocksProxyAgent } from 'socks-proxy-agent'
 
 import * as tunnel from 'tunnel'
 const inflate = promisify(zlib.inflate)

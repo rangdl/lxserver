@@ -4,12 +4,12 @@ import { requestMsg } from './message'
 import { bHh } from './musicSdk/options'
 import { deflateRaw } from 'zlib'
 import * as tunnel from 'tunnel'
-const { SocksProxyAgent } = require('socks-proxy-agent')
+
 
 const httpsRxp = /^https:/
 
 // Mock proxy config from global.lx.config if needed, or environment variables
-const getRequestAgent = url => {
+const getRequestAgent = async url => {
     const config = global.lx?.config || {}
     const proxyEnabled = config['proxy.all.enabled']
     const proxyAddress = config['proxy.all.address']
@@ -28,6 +28,7 @@ const getRequestAgent = url => {
                 }
                 return (isHttps ? tunnel.httpsOverHttp : tunnel.httpOverHttp)(tunnelOptions)
             } else if (proxyUrl.protocol.startsWith('socks')) {
+                const { SocksProxyAgent } = await import('socks-proxy-agent')
                 return new SocksProxyAgent(proxyAddress)
             }
         } catch (e) {
@@ -270,7 +271,7 @@ const fetchData = async (url, method, {
         method,
         headers: Object.assign({}, defaultHeaders, headers),
         timeout,
-        agent: getRequestAgent(url),
+        agent: await getRequestAgent(url),
         json: format === 'json',
         rejectUnauthorized: false,
     }, (err, resp, body) => {

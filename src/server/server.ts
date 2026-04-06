@@ -24,7 +24,6 @@ import * as customSourceHandlers from './customSourceHandlers'
 import * as fileCache from './fileCache'
 import crypto from 'node:crypto'
 import needle from 'needle'
-import { SocksProxyAgent } from 'socks-proxy-agent'
 const { MusicTagger, MetaPicture } = require('music-tag-native')
 
 // ===== Player Session Store =====
@@ -3591,6 +3590,7 @@ const handleStartServer = async (port = 9527, ip = '127.0.0.1') => await new Pro
             if (url.protocol === 'http:' || url.protocol === 'https:') {
               options.proxy = address
             } else if (url.protocol.startsWith('socks')) {
+              const { SocksProxyAgent } = await import('socks-proxy-agent')
               options.agent = new SocksProxyAgent(address)
             } else {
               throw new Error('Unsupported protocol: ' + url.protocol)
